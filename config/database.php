@@ -1,0 +1,1 @@
+Si jamais ça me tente d'avoir du mysqli, mettre les fonctions ici.

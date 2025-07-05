@@ -2,7 +2,8 @@
 <?php $page = "index"; ?>
 <?php
 // index.php - Gestion des joueurs de ligue
-#require_once 'config/database.php';
+require_once 'config/api_config.php';
+require_once 'classes/JoueurService.php';
 require_once 'classes/Joueur.php';
 
 // Logique PHP
@@ -28,11 +29,14 @@ if ($_POST['action'] ?? '' === 'ajouter') {
 #$dateNaissEricK->setDate('1960', '12', '1');
 #$dateString = $dateNaissEricK->format('d-m-Y');
 #echo "<p>Date naissance EK : $dateString </p>";
-$joueurs = [
-    new Joueur("Sidney", "Crosby", new DateTime('1987-08-07'), "Cole Harbour"),
-    new Joueur("Connor", "McDavid", new DateTime("1997-01-12"), "Richmond Hill"),
-    new Joueur("Erik", "Karlsson", new DateTime('1990-05-31'), "Landsbro")
-];
+//$joueurs = [
+//    new Joueur("Sidney", "Crosby", new DateTime('1987-08-07'), "Cole Harbour"),
+//    new Joueur("Connor", "McDavid", new DateTime("1997-01-12"), "Richmond Hill"),
+//    new Joueur("Erik", "Karlsson", new DateTime('1990-05-31'), "Landsbro")
+//];
+$joueurService = new JoueurService();
+$joueurs = $joueurService->obtenirTousLesJoueurs();
+var_dump($joueurs);
 ?>
 <html lang="fr">
 <head>
