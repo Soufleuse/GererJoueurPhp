@@ -1,2 +1,0 @@
-
-                <br>Date de naissance: <?php $dateNaiss = $joueur->getDateNaissance()->format('d-m-Y'); echo $dateNaiss; ?>
