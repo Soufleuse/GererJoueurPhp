@@ -142,9 +142,9 @@ class Joueur
             'nom' => $this->nom,
             'dateNaissance' => $this->dateNaissance->format('Y-m-d'),
             'villeNaissance' => $this->villeNaissance,
-            'paysOrigine' => $this->paysOrigine,
+            'paysOrigine' => $this->paysOrigine/*,
             'nomComplet' => $this->getNomComplet(),
-            'age' => $this->getAge()
+            'age' => $this->getAge()*/
         ];
     }
 

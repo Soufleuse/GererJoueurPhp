@@ -10,33 +10,40 @@ require_once 'classes/Joueur.php';
 $joueurs = [];
 $message = '';
 
+$joueurService = new JoueurService();
+
 if ($_POST['action'] ?? '' === 'ajouter') {
-    $nom = $_POST['prenom'] ?? '';
-    $position = $_POST['nom'] ?? '';
+    $prenom = $_POST['prenom'] ?? '';
+    $nom = $_POST['nom'] ?? '';
     $datenaissance = $_POST['dateNaissance'] ?? '';
+    $villeNaissance = $_POST['villeNaissance'] ?? '';
+    $paysOrigine = $_POST['paysOrigine'] ?? '';
+
+    /*var_dump($prenom);
+    var_dump($nom);
+    var_dump($datenaissance);
+    var_dump($villeNaissance);
+    var_dump($paysOrigine);*/
     
-    if ($prenom && $nom) {
-        $joueur = new Joueur($prenom, $nom, $datenaissance);
-        $joueurs[] = $joueur;
-        $message = "Joueur $nom ajouté avec succès !";
+    if ($prenom && $nom && $datenaissance && $villeNaissance && $paysOrigine) {
+        echo "Sur le point d'ajouter le joueur<br>";
+        $joueur = new Joueur($prenom, $nom, new DateTime($datenaissance), $villeNaissance, $paysOrigine);
+        echo "Appel à ajouterJoueur<br>";
+        if($joueurService->ajouterJoueur($joueur->toArray()) !== false) {
+            $joueurs[] = $joueur;
+            $message = "Joueur $nom ajouté avec succès !";
+        }
+        else {
+            $message = "Erreur à l'ajout du joueur";
+        }
+    }
+    else {
+        $message = "Veuillez entrer les informations requises.";
     }
 }
 
-// Exemple de données statiques pour la démo
-#$dateNaissEricK = new DateTime('1990-05-31');
-#$dateString = $dateNaissEricK->format('d-m-Y');
-#echo "<p>Date naissance EK : $dateString </p>";
-#$dateNaissEricK->setDate('1960', '12', '1');
-#$dateString = $dateNaissEricK->format('d-m-Y');
-#echo "<p>Date naissance EK : $dateString </p>";
-//$joueurs = [
-//    new Joueur("Sidney", "Crosby", new DateTime('1987-08-07'), "Cole Harbour"),
-//    new Joueur("Connor", "McDavid", new DateTime("1997-01-12"), "Richmond Hill"),
-//    new Joueur("Erik", "Karlsson", new DateTime('1990-05-31'), "Landsbro")
-//];
-$joueurService = new JoueurService();
 $joueurs = $joueurService->obtenirTousLesJoueurs();
-var_dump($joueurs);
+//var_dump($joueurs);
 ?>
 <html lang="fr">
 <head>
@@ -69,8 +76,16 @@ var_dump($joueurs);
             <input type="text" id="nom" name="nom" required>
         </div>
         <div class="form-group">
-            <label for="dateNaissance">Nom du joueur:</label>
+            <label for="dateNaissance">Date de naissance:</label>
             <input type="date" id="dateNaissance" name="dateNaissance" required>
+        </div>
+        <div class="form-group">
+            <label for="villeNaissance">Ville de naissance:</label>
+            <input type="text" id="villeNaissance" name="villeNaissance" required>
+        </div>
+        <div class="form-group">
+            <label for="paysOrigine">Pays de naissance:</label>
+            <input type="text" id="paysOrigine" name="paysOrigine" required>
         </div>
         
         <!--div class="form-group">
@@ -88,7 +103,7 @@ var_dump($joueurs);
         <button type="submit" name="action" value="ajouter">Ajouter le joueur</button>
     </form>
     
-    <h2>Liste des joueurs (<?php echo count($joueurs); ?>)</h2>
+    <h2>Liste des joueurs (<?php echo count($joueurs); ?> dans la liste)</h2>
     <?php if (empty($joueurs)): ?>
         <p>Aucun joueur enregistré.</p>
     <?php else: ?>
@@ -96,9 +111,8 @@ var_dump($joueurs);
             <div class="joueur">
                 <strong><?php echo htmlspecialchars($joueur->getNomComplet()); ?></strong>
                 <br>Date de naissance: <?php 
-                    echo $joueur->getDateNaissance() ? $joueur->getDateNaissance()->format('d-m-Y') : 'Non définie'; 
-                ?>
-                <br>Ville de naissance: <?php echo htmlspecialchars($joueur->getVilleNaissance()); ?>
+                    echo $joueur->getDateNaissance() ? $joueur->getDateNaissance()->format('d-m-Y') : 'Non définie';  ?>, Âge : <?php echo $joueur->getAge(); ?> ans
+                <br>Lieu de naissance: <?php echo htmlspecialchars($joueur->getVilleNaissance()); ?>, <?php echo htmlspecialchars($joueur->getPaysOrigine());?>
             </div>
         <?php endforeach; ?>
     <?php endif; ?>
