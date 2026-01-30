@@ -1,11 +1,12 @@
 <?php
 require_once 'classes/Joueur.php';
+require_once 'config/api_config.php';
 
 class JoueurService {
     private $baseUrl;
     
     public function __construct() {
-        $this->baseUrl = API_BASE_URL;
+        $this->baseUrl = 'http://localhost:5245/api/joueur';
     }
     
     /**
