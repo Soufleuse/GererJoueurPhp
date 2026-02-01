@@ -68,7 +68,7 @@ class JoueurService {
     public function ajouterJoueur($unJoueur) {
         $ch = curl_init();
         
-        // Conversion de l'objet en JSON (au lieu de http_build_query)
+        // Conversion de l'objet en JSON
         $jsonData = json_encode($unJoueur);
         
         // Configuration de la requête POST
@@ -101,8 +101,110 @@ class JoueurService {
         
         return $response;
     }
+
+    /**
+     * Obtient un joueur spécifique par son ID
+     * 
+     * @param int $idJoueur L'ID du joueur à récupérer
+     * @return Joueur L'objet Joueur
+     */
+    public function obtenirJoueur(int $idJoueur) {
+        $ch = curl_init();
+        
+        // Construction de l'URL avec l'ID
+        $url = $this->baseUrl . '/' . $idJoueur;
+        
+        // Configuration de la requête GET
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Accept: application/json'
+        ]);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        
+        // Vérification d'erreurs
+        if (curl_error($ch)) {
+            curl_close($ch);
+            throw new Exception('Erreur cURL: ' . curl_error($ch));
+        }
+        
+        curl_close($ch);
+        
+        // Vérification du code HTTP
+        if ($httpCode !== 200) {
+            throw new Exception('Erreur HTTP: ' . $httpCode . ' - ' . $response);
+        }
+        
+        $joueurData = json_decode($response, true);
+        
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new Exception('Erreur de décodage JSON: ' . json_last_error_msg());
+        }
+        
+        // Création de l'objet Joueur à partir des données
+        $joueur = new Joueur(
+            $joueurData["prenom"],
+            $joueurData["nom"],
+            new DateTime($joueurData["dateNaissance"]),
+            $joueurData["villeNaissance"],
+            $joueurData["paysOrigine"],
+            $joueurData["id"]
+        );
+        
+        return $joueur;
+    }
+
+    /**
+     * Modifie un joueur existant dans la BD
+     * 
+     * @param array $joueurData Les données du joueur à modifier
+     * @return mixed La réponse de l'API
+     */
+    public function modifierJoueur($joueurData) {
+        $ch = curl_init();
+        
+        // Conversion des données en JSON
+        $jsonData = json_encode($joueurData);
+        
+        // Construction de l'URL avec l'ID
+        $url = $this->baseUrl . '/' . $joueurData['id'];
+        
+        // Configuration de la requête PUT
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Accept: application/json',
+            'Content-Length: ' . strlen($jsonData)
+        ]);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        
+        // Vérification d'erreurs
+        if (curl_error($ch)) {
+            curl_close($ch);
+            throw new Exception('Erreur cURL: ' . curl_error($ch));
+        }
+        
+        curl_close($ch);
+        
+        // Vérification du code HTTP
+        if ($httpCode < 200 || $httpCode >= 300) {
+            throw new Exception('Erreur HTTP: ' . $httpCode . ' - ' . $response);
+        }
+        
+        return $response;
+    }
     
-    // Méthode utilitaire pour les requêtes cURL
+    // Méthode utilitaire pour les requêtes cURL (gardée pour usage futur)
     private function executerRequeteCurl($url, $method = 'GET', $data = null, $headers = []) {
         $ch = curl_init();
         

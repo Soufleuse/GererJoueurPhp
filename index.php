@@ -9,8 +9,46 @@ require_once 'classes/Joueur.php';
 // Logique PHP
 $joueurs = [];
 $message = '';
+$joueurAModifier = null;
 
 $joueurService = new JoueurService();
+
+// Gestion de la modification
+if ($_POST['action'] ?? '' === 'modifier') {
+    $id = $_POST['id'] ?? '';
+    $prenom = $_POST['prenom'] ?? '';
+    $nom = $_POST['nom'] ?? '';
+    $datenaissance = $_POST['dateNaissance'] ?? '';
+    $villeNaissance = $_POST['villeNaissance'] ?? '';
+    $paysOrigine = $_POST['paysOrigine'] ?? '';
+    
+    if ($id && $prenom && $nom && $datenaissance && $villeNaissance && $paysOrigine) {
+        try {
+            $joueur = new Joueur($prenom, $nom, new DateTime($datenaissance), $villeNaissance, $paysOrigine);
+            $joueurData = $joueur->toArray();
+            $joueurData['id'] = $id;
+            
+            if($joueurService->modifierJoueur($joueurData) !== false) {
+                $message = "Joueur $nom modifié avec succès !";
+            }
+            else {
+                $message = "Erreur à la modification du joueur";
+            }
+        } catch (Exception $e) {
+            $message = "Erreur : " . $e->getMessage();
+        }
+    }
+}
+
+// Chargement d'un joueur pour modification
+if ($_GET['modifier'] ?? '' !== '') {
+    $idModif = $_GET['modifier'];
+    try {
+        $joueurAModifier = $joueurService->obtenirJoueur($idModif);
+    } catch (Exception $e) {
+        $message = "Erreur lors du chargement du joueur : " . $e->getMessage();
+    }
+}
 
 if ($_POST['action'] ?? '' === 'ajouter') {
     $prenom = $_POST['prenom'] ?? '';
@@ -45,196 +83,8 @@ $joueurs = $joueurService->obtenirTousLesJoueurs();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="/gererjoueur/images/balle-baseball.png">
+    <link rel="stylesheet" href="css/styles.css">
     <title>Gestion des Joueurs - Ligue</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        h1 {
-            color: white;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .card {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-        
-        h2 {
-            color: #667eea;
-            margin-bottom: 20px;
-            font-size: 1.8em;
-            border-bottom: 3px solid #667eea;
-            padding-bottom: 10px;
-        }
-        
-        .message {
-            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
-            color: #1a5f3d;
-            padding: 15px 20px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-            font-weight: 500;
-            box-shadow: 0 4px 15px rgba(132, 250, 176, 0.3);
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 600;
-            font-size: 0.95em;
-        }
-        
-        input[type="text"],
-        input[type="date"],
-        select {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1em;
-            transition: all 0.3s ease;
-            background: #f8f9fa;
-        }
-        
-        input[type="text"]:focus,
-        input[type="date"]:focus,
-        select:focus {
-            outline: none;
-            border-color: #667eea;
-            background: white;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        
-        button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 14px 35px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-        
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-        }
-        
-        button:active {
-            transform: translateY(0);
-        }
-        
-        .joueur-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-        
-        .joueur {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-            border-left: 5px solid #667eea;
-        }
-        
-        .joueur:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        }
-        
-        .joueur strong {
-            color: #667eea;
-            font-size: 1.3em;
-            display: block;
-            margin-bottom: 12px;
-        }
-        
-        .joueur-info {
-            color: #555;
-            line-height: 1.8;
-            font-size: 0.95em;
-        }
-        
-        .joueur-info span {
-            display: block;
-            margin-bottom: 5px;
-        }
-        
-        .badge {
-            display: inline-block;
-            background: #667eea;
-            color: white;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: 600;
-            margin-top: 8px;
-        }
-        
-        .empty-state {
-            text-align: center;
-            color: #999;
-            padding: 40px;
-            font-size: 1.1em;
-        }
-        
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-        }
-        
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 1.8em;
-            }
-            
-            .card {
-                padding: 20px;
-            }
-            
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .joueur-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
 </head>
 <body>
     <div class="container">
@@ -249,32 +99,48 @@ $joueurs = $joueurService->obtenirTousLesJoueurs();
         </div>
         
         <div class="card" id="formSection" style="display: none;">
-            <h2>➕ Ajouter un joueur</h2>
+            <h2><?php echo $joueurAModifier ? '✏️ Modifier le joueur' : '➕ Ajouter un joueur'; ?></h2>
             <form method="POST">
+                <?php if ($joueurAModifier): ?>
+                    <input type="hidden" name="id" value="<?php echo htmlspecialchars($joueurAModifier->getId() ?? ''); ?>">
+                <?php endif; ?>
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="prenom">Prénom du joueur</label>
-                        <input type="text" id="prenom" name="prenom" required placeholder="Ex: Wayne">
+                        <input type="text" id="prenom" name="prenom" required placeholder="Ex: Wayne" 
+                               value="<?php echo $joueurAModifier ? htmlspecialchars($joueurAModifier->getPrenom()) : ''; ?>">
                     </div>
                     <div class="form-group">
                         <label for="nom">Nom du joueur</label>
-                        <input type="text" id="nom" name="nom" required placeholder="Ex: Gretzky">
+                        <input type="text" id="nom" name="nom" required placeholder="Ex: Gretzky"
+                               value="<?php echo $joueurAModifier ? htmlspecialchars($joueurAModifier->getNom()) : ''; ?>">
                     </div>
                     <div class="form-group">
                         <label for="dateNaissance">Date de naissance</label>
-                        <input type="date" id="dateNaissance" name="dateNaissance" required>
+                        <input type="date" id="dateNaissance" name="dateNaissance" required
+                               value="<?php echo $joueurAModifier && $joueurAModifier->getDateNaissance() ? $joueurAModifier->getDateNaissance()->format('Y-m-d') : ''; ?>">
                     </div>
                     <div class="form-group">
                         <label for="villeNaissance">Ville de naissance</label>
-                        <input type="text" id="villeNaissance" name="villeNaissance" required placeholder="Ex: Montréal">
+                        <input type="text" id="villeNaissance" name="villeNaissance" required placeholder="Ex: Montréal"
+                               value="<?php echo $joueurAModifier ? htmlspecialchars($joueurAModifier->getVilleNaissance()) : ''; ?>">
                     </div>
                     <div class="form-group">
                         <label for="paysOrigine">Pays de naissance</label>
-                        <input type="text" id="paysOrigine" name="paysOrigine" required placeholder="Ex: Canada">
+                        <input type="text" id="paysOrigine" name="paysOrigine" required placeholder="Ex: Canada"
+                               value="<?php echo $joueurAModifier ? htmlspecialchars($joueurAModifier->getPaysOrigine()) : ''; ?>">
                     </div>
                 </div>
                 
-                <button type="submit" name="action" value="ajouter">Ajouter le joueur</button>
+                <button type="submit" name="action" value="<?php echo $joueurAModifier ? 'modifier' : 'ajouter'; ?>">
+                    <?php echo $joueurAModifier ? '💾 Enregistrer les modifications' : 'Ajouter le joueur'; ?>
+                </button>
+                
+                <?php if ($joueurAModifier): ?>
+                    <button type="button" onclick="window.location.href='index.php'" style="background: linear-gradient(135deg, #868f96 0%, #596164 100%); margin-left: 10px;">
+                        Annuler
+                    </button>
+                <?php endif; ?>
             </form>
         </div>
         
@@ -288,7 +154,7 @@ $joueurs = $joueurService->obtenirTousLesJoueurs();
             <?php else: ?>
                 <div class="joueur-grid">
                     <?php foreach ($joueurs as $index => $joueur): ?>
-                        <div class="joueur">
+                        <div class="joueur" onclick="window.location.href='?modifier=<?php echo htmlspecialchars($joueur->getId() ?? ''); ?>'">
                             <strong><?php echo htmlspecialchars($joueur->getNomComplet()); ?></strong>
                             <div class="joueur-info">
                                 <span>📅 Né le <?php echo $joueur->getDateNaissance() ? $joueur->getDateNaissance()->format('d/m/Y') : 'Non définie'; ?></span>
@@ -320,6 +186,15 @@ $joueurs = $joueurService->obtenirTousLesJoueurs();
                 toggleBtn.textContent = '➕ Ajouter un nouveau joueur';
             }
         }
+        
+        // Si on est en mode modification, afficher le formulaire au chargement
+        <?php if ($joueurAModifier): ?>
+        window.onload = function() {
+            document.getElementById('formSection').style.display = 'block';
+            document.getElementById('listSection').style.display = 'none';
+            document.getElementById('toggleBtn').textContent = '📋 Retour à la liste';
+        };
+        <?php endif; ?>
     </script>
 </body>
 </html>
